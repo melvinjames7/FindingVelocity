@@ -1,7 +1,6 @@
 //
 //
-//  Created by Melvin James on 3/8/17.
-//  Copyright © 2017 Melvin James. All rights reserved.
+//  Created by Melvin James 
 //
 
 #include <opencv2/core/core.hpp>
@@ -18,6 +17,95 @@ using namespace std;
 Point Purple1,Purple2, Orange1, Orange2;
 int flag = 0,Pradius=0,Oradius=0;
 
+Mat makeBinary(Mat image)
+{
+    Mat d_image = Mat::zeros( image.size(), image.type() );  //for new brightness adjusted image
+    for( int y = 0; y < image.rows; y++ )
+    { for( int x = 0; x < image.cols; x++ )
+    {
+        float r = (image.at<Vec3b>(y,x)[2]);
+        float g = (image.at<Vec3b>(y,x)[1]);
+        float b = (image.at<Vec3b>(y,x)[0]);
+        
+        if(r-g >20 || b-g>20){
+            r = 255; g=255; b=255;      //white
+        }
+        else{
+            r = 0; g = 0; b = 0;        //black
+        }
+        
+        d_image.at<Vec3b>(y,x)[0] =
+        saturate_cast<uchar>( b);
+        d_image.at<Vec3b>(y,x)[1] =
+        saturate_cast<uchar>( g );
+        d_image.at<Vec3b>(y,x)[2] =
+        saturate_cast<uchar>( r);
+        
+    }
+    }
+    
+    medianBlur(d_image, d_image, 17);                   //to filter noise
+    
+    int i=0,X1=0,Y1=0, X2=0,Y2=0,width1 =0,width2=0;
+    for( int y = 0; y < d_image.rows; y++ )
+    {
+        for( int x = 0; x < d_image.cols/2; x++ )
+        {
+            float r = (d_image.at<Vec3b>(y,x)[2]);
+            
+            if(r==255)
+            {  i++;}
+            else
+            {
+                if(i>width1)
+                {
+                    X1=x;
+                    Y1=y;
+                    width1 = i;
+                    
+                    
+                }i=0;
+            }
+        }i=0;
+    }X1-=width1/2;
+    
+    rectangle(d_image, Point(X1-width1/2,Y1-width1/2), Point(X1+width1/2,Y1+width1/2), Scalar(0,0,255));
+    
+    for( int y = 0; y < d_image.rows; y++ )
+    {
+        for( int x = d_image.cols/2; x < d_image.cols; x++ )
+        {
+            float r = (d_image.at<Vec3b>(y,x)[2]);
+            
+            if(r==255)
+            {  i++;}
+            else
+            {
+                if(i>width2)
+                {
+                    X2=x;
+                    Y2=y;
+                    width2 = i;
+                    
+                }i=0;
+            }
+        }i=0;
+    }X2-=width2/2;
+    
+    if(flag == 0){
+        Purple1.x=X1;Purple1.y = Y1;
+        Orange1=Point(X2,Y2);
+        flag++;
+        Pradius = width1;Oradius = width2;
+    }
+    else{
+        Purple2=Point(X2,Y2);
+        Orange2=Point(X1,Y1);
+    }
+    
+    rectangle(d_image, Point(X2-width2/2,Y2-width2/2), Point(X2+width2/2,Y2+width2/2), Scalar(0,0,255));
+    return d_image;
+}
 
 int main(int argc, const char * argv[]) {
     string CimageName1("/Users/melvinjames/Desktop/color_92331.png");
